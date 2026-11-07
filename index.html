@@ -54,6 +54,7 @@ a{color:var(--accent)}
 .speed button{border:0;background:var(--paper);min-height:44px;padding:4px 12px;cursor:pointer;color:var(--muted);font-family:var(--f-num)}
 .speed button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .status{font-size:.92rem;color:var(--muted)}
+.offbox{display:flex;flex-direction:column;gap:6px;background:var(--soft);border-radius:14px;padding:12px}.offbox .btn{width:100%}
 .status.err{color:#b4472f}
 
 /* tabs */
@@ -252,6 +253,8 @@ function cur(){return byId.get(S.cur)||sorted[0]}
 function pct(t){const p=S.pos[t.id];return p&&p.d?Math.min(1,p.t/p.d):0}
 function logListen(t){if(t.id<0)return;const today=new Date().toISOString().slice(0,10);const last=S.log[0];if(!last||last.id!==t.id||last.day!==today){S.log.unshift({id:t.id,day:today});S.log=S.log.slice(0,300)}save()}
 
+let failId=0;
+function needLocal(t){return navigator.onLine===false||failId===t.id||(!!au.dataset.local&&+au.dataset.id===t.id)}
 function nowCard(){const t=cur();if(!t)return'';const p=S.pos[t.id]||{};const playing=!au.paused&&au.dataset.id==t.id;
   return `<section class="now" aria-label="正在收听"><span class="sprig">${LILY_SPRIG}</span><span class="lab">${S.cur?'正在收听':'最新一篇'}</span><h2>${esc(t.title)}</h2>
 <div class="meta">${t.ref?`<span>${esc(t.ref)}</span>`:''}${t.speaker?`<span>讲员 ${esc(t.speaker)}</span>`:''}<span>${dzh(t.date)}</span>${t.dur?`<span>${mins(t)}</span>`:''}</div><p class="muted">系列：${esc(t.series)}</p>
@@ -262,8 +265,7 @@ ${(()=>{const pv=prevOf(t),nx=nextOf(t)||nextAny(t);return `<div class="ctrl"><b
 ${(()=>{const nx=nextOf(t);return `<div class="row auto"><button class="toggle" id="bauto" role="switch" aria-checked="${S.auto!==false}"><span class="knob"></span>连续播放</button><span class="note">${S.auto!==false?(nx?'听完自动播放下一篇：'+esc(nx.title):'这是本系列的最后一篇，听完会停下'):'听完这一篇就停下'}</span></div>`})()}
 <p class="status" id="st">${p.t>5&&!playing?'上次听到 '+fmt(p.t)+'，点「继续听」接着听。':''}</p>
 ${t.id>0?`<div class="row">${S.dl[t.id]?`<a class="btn ghost done-btn" id="bdl" href="${mp3(t)}" target="_blank" rel="noopener">${ICO.ok}已下载<span class="dl">（约 ${mb(t)}）</span></a>`:`<a class="btn ghost" id="bdl" href="${mp3(t)}" target="_blank" rel="noopener">${ICO.dl}下载到手机<span class="dl">${mb(t)?'（约 '+mb(t)+'）':''}</span></a>`}${PS[t.id]?`<button class="btn ghost" id="bps">${ICO.book}看经文</button>`:''}${HO[t.id]?`<button class="btn ghost" id="bho">${ICO.doc}看讲义</button>`:(t.sheet?`<a class="btn ghost" href="${esc(t.sheet)}" target="_blank" rel="noopener">讲义</a>`:'')}</div>
-${S.dl[t.id]?`<button class="btn ghost" id="blocal">${ICO.folder}播放手机里的这一篇（没网也能听）</button>`:`<button class="btn ghost off" id="blocal">${ICO.folder}未下载，没网时听不了</button>`}`:''}
-<p class="note">${S.dl[t.id]?`没网的时候点上面的按钮，在手机的「下载」文件夹里选 <b class="code">${esc(t.file)}</b>，就能在这里接着听，进度和听道记录照常保存。`:'想没网的时候也能听，先点「下载到手机」。下载后，这一篇会出现在「已下载」里。'}</p></section>`}
+${needLocal(t)?(S.dl[t.id]?`<div class="offbox"><button class="btn" id="blocal">${ICO.folder}没网？选手机里下载好的录音来播</button><p class="note">点上面的按钮，在手机的「下载」文件夹里选 <b class="code">${esc(t.file)}</b>，就能接着听，进度和听道记录照常保存。</p></div>`:`<div class="offbox"><p class="note">这一篇还没下载，没网的时候听不了。有网时点「下载到手机」，以后没网也能听。</p></div>`):(S.dl[t.id]?'':`<p class="note">想没网的时候也能听，先点「下载到手机」。</p>`)}`:''}</section>`}
 
 function row(t){const p=pct(t),heard=S.heard[t.id];
   return `<button class="talk${heard?' heard':''}${S.cur===t.id?' cur':''}" data-id="${t.id}"><span class="ic">${heard?ICO.ok:ICO.play}</span><span class="tx"><span class="t">${esc(t.title)}${t.type!=='SC'?'<span class="tag">专题</span>':''}</span><span class="m">${[t.ref,dzh(t.date),t.speaker,mins(t)].filter(Boolean).map(esc).join(' · ')}</span>${p>0.02&&!heard?`<span class="pg"><i style="width:${p*100}%"></i></span>`:''}</span>${heard?'<span class="badge">听完</span>':''}</button>`}
@@ -279,7 +281,7 @@ function body(){
 ${groupBySeries(sorted.filter(t=>t.book===book).sort((a,b)=>a.date.localeCompare(b.date)))}`}
   if(tab==='dl'){const list=Object.keys(S.dl).map(id=>byId.get(+id)).filter(Boolean).sort((a,b)=>S.dl[b.id]-S.dl[a.id]);
     const total=list.reduce((n,t)=>n+(t.dur||0)*12015,0);
-    if(!list.length)return `<section class="panel"><h2>还没有下载的讲道</h2><p>在上面的播放卡片里点「下载到手机」，下载的讲道会列在这里。没网的时候，在这里点一篇，再点「播放手机里的这一篇」就能听。</p></section>`;
+    if(!list.length)return `<section class="panel"><h2>还没有下载的讲道</h2><p>在上面的播放卡片里点「下载到手机」，下载的讲道会列在这里。没网的时候，在这里点一篇，再点「没网？选手机里下载好的录音来播」就能听。</p></section>`;
     const nSel=list.filter(t=>sel.has(t.id)).length;
     return `<div class="dlbar"><p class="muted">共 ${list.length} 篇，约 ${Math.round(total/1e6)} MB</p>${selMode?`<div class="row"><button class="btn ghost sm2" id="selall">${nSel===list.length?'全不选':'全选'}</button><button class="btn sm2 warn" id="delsel" ${nSel?'':'disabled'}>移出所选（${nSel}）</button><button class="btn ghost sm2" id="seldone">完成</button></div>`:`<button class="btn ghost sm2" id="selon">选择</button>`}</div>
 ${confirmDel?`<section class="confirm"><p>确定把这 ${nSel} 篇移出「已下载」列表吗？</p><p class="note">网页删不了手机里的文件。想腾出空间，请在手机的「文件管理」→「下载」里删除对应的录音（文件名见每篇下面）。</p><div class="row"><button class="btn warn" id="delyes">确定移出</button><button class="btn ghost" id="delno">取消</button></div></section>`:''}
@@ -344,7 +346,7 @@ function wire(){
 }
 function wireRows(root){
   if(root.querySelector('#more'))root.querySelector('#more').onclick=()=>{shown+=30;refreshRes()};
-  root.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{if(selMode&&tab==='dl'){const i=+b.dataset.id;sel.has(i)?sel.delete(i):sel.add(i);confirmDel=false;render();return}const t=byId.get(+b.dataset.id);tab='now';if(navigator.onLine===false&&S.dl[t.id]){S.cur=t.id;save();render();window.scrollTo({top:0,behavior:'smooth'});setStatus('现在没有网络。点「播放手机里的这一篇」，选中下载好的录音就能听。');return}play(t);render();window.scrollTo({top:0,behavior:'smooth'})});
+  root.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{if(selMode&&tab==='dl'){const i=+b.dataset.id;sel.has(i)?sel.delete(i):sel.add(i);confirmDel=false;render();return}const t=byId.get(+b.dataset.id);tab='now';if(navigator.onLine===false&&S.dl[t.id]){S.cur=t.id;save();render();window.scrollTo({top:0,behavior:'smooth'});setStatus('现在没有网络。点下面的「没网？选手机里下载好的录音来播」就能听。');return}play(t);render();window.scrollTo({top:0,behavior:'smooth'})});
 }
 function wireRest(){
   document.querySelectorAll('[data-rate]').forEach(b=>b.onclick=()=>{S.rate=+b.dataset.rate;au.playbackRate=S.rate;save();render()});
@@ -385,6 +387,7 @@ ${t.sheet?`<a class="btn ghost" href="${esc(t.sheet)}" target="_blank" rel="noop
   $('#rminus').onclick=()=>sz(-.15);$('#rplus').onclick=()=>sz(.15)}
 function closeReader(){$('#reader').hidden=true;document.body.style.overflow=''}
 document.addEventListener('keydown',e=>{if(e.key==='Escape'&&!$('#reader').hidden)closeReader()});
+function onlineFail(){if(au.dataset.local){setStatus('这个文件播放不了，请换一个录音文件试试。',true);return}failId=+au.dataset.id;if(tab==='now')render();setStatus(S.dl[failId]?'没能在线播放，可能是没有网络。这一篇已下载，点下面的按钮选手机里的录音就能听。':'没能播放，请检查网络后再试。',true)}
 function setStatus(m,err){const e=$('#st');if(e){e.textContent=m;e.className='status'+(err?' err':'')}}
 let playSeq=0;
 function play(t,local){
@@ -392,7 +395,7 @@ function play(t,local){
   if(local||au.dataset.id!=t.id||au.dataset.local){au.dataset.id=t.id;au.dataset.local=local?'1':'';au.src=local||mp3(t);const p=S.pos[t.id];
     au.addEventListener('loadedmetadata',()=>{if(p&&p.t>5&&!(S.heard[t.id]&&pct(t)>.97))au.currentTime=p.t},{once:true})}
   au.playbackRate=S.rate;setStatus(au.dataset.local?'':'正在连接，请稍等……');
-  const my=++playSeq;const pr=au.play();if(pr&&pr.catch)pr.catch(e=>{if(my!==playSeq||(e&&e.name==='AbortError'))return;setStatus(au.dataset.local?'这个文件播放不了，请换一个录音文件试试。':(S.dl[+au.dataset.id]?'没能在线播放，可能是没有网络。这一篇已下载，可以点「播放手机里的这一篇」。':'没能播放，请检查网络后再试。'),true)});
+  const my=++playSeq;const pr=au.play();if(pr&&pr.catch)pr.catch(e=>{if(my!==playSeq||(e&&e.name==='AbortError'))return;onlineFail()});
   logListen(t);userPaused=false;setMeta(t);
 }
 /* Lock-screen controls (Media Session) and resume after the system pauses us */
@@ -414,9 +417,10 @@ if('mediaSession' in navigator){const ms=navigator.mediaSession,on=(k,f)=>{try{m
   on('seekbackward',d=>{au.currentTime=Math.max(0,au.currentTime-((d&&d.seekOffset)||15));msPos()});
   on('seekforward',d=>{au.currentTime=Math.min(au.duration||1e9,au.currentTime+((d&&d.seekOffset)||15));msPos()});
   on('seekto',d=>{if(d&&isFinite(d.seekTime)){au.currentTime=d.seekTime;msPos()}})}
-au.addEventListener('playing',()=>{sysPaused=false;if('mediaSession' in navigator)navigator.mediaSession.playbackState='playing';msPos()});
+au.addEventListener('playing',()=>{sysPaused=false;if(!au.dataset.local&&failId===+au.dataset.id){failId=0}if('mediaSession' in navigator)navigator.mediaSession.playbackState='playing';msPos()});
 au.addEventListener('pause',()=>{if('mediaSession' in navigator)navigator.mediaSession.playbackState='paused';if(!userPaused&&!au.ended&&document.hidden)sysPaused=true});
 au.addEventListener('ratechange',msPos);au.addEventListener('loadedmetadata',msPos);
+window.addEventListener('online',()=>{if(tab==='now')render()});window.addEventListener('offline',()=>{if(tab==='now')render()});
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&sysPaused&&au.paused&&au.src){sysPaused=false;const pr=au.play();if(pr&&pr.catch)pr.catch(()=>{});setStatus('刚才手机暂停了播放，已经从停下的地方接着放。')}});
 let lastSave=0;
 au.ontimeupdate=()=>{const id=+au.dataset.id,t=byId.get(id);if(!t)return;const d=au.duration||0;
@@ -428,8 +432,8 @@ au.onpause=()=>{const id=+au.dataset.id;if(id>0){S.pos[id]={t:au.currentTime,d:a
 au.onended=()=>{const id=+au.dataset.id;const local=au.dataset.local;if(id>0)S.heard[id]=1;S.pos[id]={t:0,d:au.duration||0};save();
   const nx=S.auto!==false?nextOf(byId.get(id)):null;
   if(nx&&!local){play(nx);soft();setStatus('已自动播放下一篇。')}
-  else{soft();if(nx&&local)setStatus('下一篇是「'+nx.title+'」。没网时请点「播放手机里的这一篇」再选一次文件。')}};
-au.onerror=()=>{if(au.dataset.local&&au.src!==localUrl)return;setStatus(au.dataset.local?'这个文件播放不了，请换一个录音文件试试。':(S.dl[+au.dataset.id]?'没能在线播放，可能是没有网络。这一篇已下载，可以点「播放手机里的这一篇」。':'没能播放，请检查网络后再试。'),true)};
+  else{soft();if(nx&&local)setStatus('下一篇是「'+nx.title+'」。没网时请点「没网？选手机里下载好的录音来播」再选一次文件。')}};
+au.onerror=()=>{if(au.dataset.local&&au.src!==localUrl)return;onlineFail()};
 let localUrl=null;
 $('#localf').onchange=()=>{const f=$('#localf').files[0];if(!f)return;
   const m=f.name.match(/(SC|FL|WA)\d{2}-\d{3}/i);let t=m&&TALKS.find(x=>x.file.toUpperCase().startsWith(m[0].toUpperCase()));
