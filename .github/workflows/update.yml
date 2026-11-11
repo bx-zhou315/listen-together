@@ -2,7 +2,7 @@ name: Weekly sermon update
 on:
   schedule:
     - cron: "17 19 * * 0"   # Sunday evening (UK)
-    - cron: "17 7 * * 1"    # Monday morning, in case the talk went up late
+    - cron: "17 7 * * *"    # every morning, so a talk uploaded late in the week is still picked up
   workflow_dispatch:
 permissions:
   contents: write
