@@ -19,7 +19,7 @@ for item in data.get("talkslist", []):
     handout = (t.get("handouts") or [{}])[0].get("location", "")
     series = t.get("series") or {}
     rows.append([
-        t["id"], t["date"][:10], t["title"],
+        t["id"], t["date"][:10], t["title"].strip(),
         "; ".join(b["bible_ref"] for b in t.get("bible_refs") or []),
         ", ".join(s["name"] for s in t.get("speaker") or []),
         (series.get("name") or "").strip(), series.get("id"),

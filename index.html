@@ -262,8 +262,8 @@ function needLocal(t){return navigator.onLine===false||failId===t.id||(!!au.data
 function nowCard(){const t=cur();if(!t)return'';const p=S.pos[t.id]||{};const playing=!au.paused&&au.dataset.id==t.id;
   return `<section class="now" aria-label="正在收听"><span class="sprig">${LILY_SPRIG}</span><span class="lab">${S.cur?'正在收听':'最新一篇'}</span><h2>${esc(t.title)}</h2>
 <div class="meta">${t.ref?`<span>${esc(t.ref)}</span>`:''}${t.speaker?`<span>讲员 ${esc(t.speaker)}</span>`:''}<span>${dzh(t.date)}</span>${t.dur?`<span>${mins(t)}</span>`:''}</div><p class="muted">系列：${esc(t.series)}</p>
-<input class="seek" id="seek" type="range" min="0" max="${Math.round(p.d||0)}" value="${Math.round(p.t||0)}" step="1" aria-label="播放进度">
-<div class="times"><span id="tcur">${fmt(p.t)}</span><span id="tdur">${p.d?fmt(p.d):'--:--'}</span></div>
+<input class="seek" id="seek" type="range" min="0" max="${Math.round(p.d||t.dur||0)}" value="${Math.round(p.t||0)}" step="1" aria-label="播放进度">
+<div class="times"><span id="tcur">${fmt(p.t)}</span><span id="tdur">${p.d?fmt(p.d):(t.dur?fmt(t.dur):'--:--')}</span></div>
 ${(()=>{const pv=prevOf(t),nx=nextOf(t)||nextAny(t);return `<div class="ctrl"><button class="btn ghost nav" id="bprev" ${pv?'':'disabled'} aria-label="上一篇">${ICO.prev}<span>上一篇</span></button><button class="btn play" id="bplay">${playing?ICO.pause+'暂停':ICO.play+(p.t>5?'继续听':'播放')}</button><button class="btn ghost nav" id="bnext" ${nx?'':'disabled'} aria-label="下一篇">${ICO.next}<span>下一篇</span></button></div>`})()}
 <div class="row"><span class="note">语速</span><div class="speed" role="group" aria-label="语速">${[0.5,0.75,1,1.25,1.5].map(r=>`<button data-rate="${r}" aria-pressed="${S.rate===r}">${r}×</button>`).join('')}</div></div>
 ${(()=>{const nx=nextOf(t);return `<div class="row auto"><button class="toggle" id="bauto" role="switch" aria-checked="${S.auto!==false}"><span class="knob"></span>连续播放</button><span class="note">${S.auto!==false?(nx?'听完自动播放下一篇：'+esc(nx.title):'这是本系列的最后一篇，听完会停下'):'听完这一篇就停下'}</span></div>`})()}
@@ -330,7 +330,7 @@ function render(){applyZoom();
 ${tab==='cat'?`<div class="seg2" role="group" aria-label="分类方式"><button data-sub="time" aria-pressed="${sub==='time'}">按时间</button><button data-sub="book" aria-pressed="${sub==='book'}">按书卷</button></div>`:''}
 <div id="body" class="group">${body()}</div>
 <div class="foot">${tab==='cat'?`<p>新的讲道每周日会放到教会网站上。这里没有的，可以去网站的中文聚会页面找：</p><a class="btn ghost" href="${SITE}/sunday/2pm/" target="_blank" rel="noopener">打开「福音之家」网页</a>`:''}
-<p class="note">讲道录音和讲义来自伦敦 St Helen's Bishopsgate 教会（st-helens.org.uk），版权归教会所有，本页仅供家人学习使用。</p></div>`;
+<p class="note">讲道录音和讲义来自伦敦 St Helen's Bishopsgate 教会（st-helens.org.uk），版权归教会所有。本页为家人和少数教会朋友整理的非商业听道页面，录音直接从教会网站播放。</p></div>`;
   wire();
 }
 function wire(){
@@ -384,7 +384,7 @@ function psHTML(t){return (PS[t.id]||[]).map(p=>`<div class="vs"><h3>${esc(p.r)}
 function openReader(mode){const t=cur();const r=$('#reader');const fs=S.fs||1.15;
   r.innerHTML=`<div class="rbar"><button class="btn ghost" id="rclose">‹ 返回</button><div class="rsize"><button class="btn ghost" id="rminus" aria-label="字变小">A−</button><button class="btn ghost" id="rplus" aria-label="字变大">A+</button></div></div>
 <article class="rbody" style="font-size:${fs}rem"><span class="sprig">${LILY_SPRIG}</span><p class="lab">${mode==='ps'?'经文':'讲义'}</p><h2>${esc(t.title)}</h2><div class="meta">${t.ref?`<span>${esc(t.ref)}</span>`:''}${t.speaker?`<span>讲员 ${esc(t.speaker)}</span>`:''}<span>${dzh(t.date)}</span></div><p class="muted">系列：${esc(t.series)}</p><hr>
-${mode==='ps'?`${psHTML(t)}<hr><p class="note">经文：圣经新译本，版权属环球圣经公会所有，仅供小范围学习使用。</p>`:`${hoHTML(t)}${HO[t.id].p?`<hr><h3>讲义原图</h3><div class="figs">${HO[t.id].p.map(src=>`<img src="${src}" alt="讲义原图" loading="lazy">`).join('')}</div>`:''}<hr>${HO[t.id].o?'<p class="note">这份讲义的文字是从图片自动识别的，个别字可能有误，可以对照原讲义。</p>':''}
+${mode==='ps'?`${psHTML(t)}<hr><p class="note">经文：圣经新译本，版权属环球圣经公会所有（©1976, 1992, 1999, 2001, 2005, 2010）。<br>Scripture texts are from The Holy Bible, Chinese New Version, Copyright ©1976, 1992, 1999, 2001, 2005, 2010 by The Worldwide Bible Society Limited. All rights reserved.</p>`:`${hoHTML(t)}${HO[t.id].p?`<hr><h3>讲义原图</h3><div class="figs">${HO[t.id].p.map(src=>`<img src="${src}" alt="讲义原图" loading="lazy">`).join('')}</div>`:''}<hr>${HO[t.id].o?'<p class="note">这份讲义的文字是从图片自动识别的，个别字可能有误，可以对照原讲义。</p>':''}
 ${t.sheet?`<a class="btn ghost" href="${esc(t.sheet)}" target="_blank" rel="noopener">打开原讲义（PDF，需要联网）</a>`:''}
 <p class="note">讲义来自 St Helen's Bishopsgate 教会，这里只调整了字体和排版，文字未作改动；诗歌歌词部分没有收录。</p>`}</article>`;
   r.hidden=false;document.body.style.overflow='hidden';r.scrollTop=0;
@@ -392,24 +392,30 @@ ${t.sheet?`<a class="btn ghost" href="${esc(t.sheet)}" target="_blank" rel="noop
   const sz=d=>{S.fs=Math.max(.9,Math.min(1.8,+(((S.fs||1.15)+d).toFixed(2))));save();r.querySelector('.rbody').style.fontSize=S.fs+'rem'};
   $('#rminus').onclick=()=>sz(-.15);$('#rplus').onclick=()=>sz(.15)}
 let bgHint=false;
-const BRANDS=[['mi','小米 / 红米'],['hw','华为 / 荣耀'],['op','OPPO / 一加 / realme'],['vv','vivo / iQOO'],['other','其他牌子']];
+const BRANDS=[['ip','苹果 iPhone'],['mi','小米 / 红米'],['hw','华为 / 荣耀'],['op','OPPO / 一加 / realme'],['vv','vivo / iQOO'],['other','其他牌子']];
 const BATT={
  mi:'打开手机<b>「设置」→「应用设置」→「应用管理」</b>（新系统叫「设置」→「应用」→「应用管理」），找到 <b>QQ浏览器</b>，点<b>「省电策略」</b>，选<b>「无限制」</b>。同一页里如果有<b>「自启动」</b>，也打开。<br>找不到的话，也可以走这条路：<b>「设置」→「省电与电池」→ 右上角齿轮 →「应用智能省电」</b>，找到 QQ浏览器，选<b>「无限制」</b>。',
  hw:'打开手机<b>「设置」→「电池」→「应用启动管理」</b>，找到 <b>QQ浏览器</b>，把<b>「自动管理」关掉</b>，在弹出的窗口里把<b>「允许自启动」「允许关联启动」「允许后台活动」</b>三个都打开，点确定。<br>同一个「电池」页面里，再点<b>「更多电池设置」</b>，打开<b>「休眠时始终保持网络连接」</b>，锁屏后在线播放才不会断网。',
  op:'打开手机<b>「设置」→「电池」→「应用耗电管理」</b>（有的手机在「更多设置」里），找到 <b>QQ浏览器</b>，打开<b>「允许后台运行」</b>或<b>「允许完全后台行为」</b>。',
  vv:'打开手机<b>「设置」→「电池」→「后台耗电管理」</b>，找到 <b>QQ浏览器</b>，选<b>「允许后台高耗电」</b>或<b>「允许后台运行」</b>。',
+ ip:'iPhone 一般不用改设置，用 <b>Safari</b> 打开这个网页就能锁屏后继续放。',
  other:'打开手机<b>「设置」→「应用」</b>，找到 <b>QQ浏览器</b>，点进去找<b>「电池」或「耗电」</b>，选<b>「不限制」「无限制」或「允许后台运行」</b>。'};
 function guideHTML(){const b=S.brand||'';
- return `<p class="lab">设置</p><h2>锁屏后不停播</h2><p class="muted">手机为了省电，锁屏一两分钟后可能会把 QQ浏览器停掉。按下面几步设置一次，以后锁屏也能接着听。各个牌子手机的菜单名字可能略有不同，找意思相近的就行。</p><hr>
+ return `<p class="lab">设置</p><h2>锁屏后不停播</h2><p class="muted">锁屏后停下来，常见原因有两个：一是手机为了省电把浏览器停掉，二是走路时信号不好、网络断了一下。网络的问题本页已经会自动重新连接；省电的问题需要按下面设置一次。按下面几步设置一次，以后锁屏也能接着听。各个牌子手机的菜单名字可能略有不同，找意思相近的就行。</p><hr>
 <h3>第一步：选你的手机牌子</h3><div class="bchips" role="group" aria-label="手机牌子">${BRANDS.map(([k,l])=>`<button data-brand="${k}" aria-pressed="${b===k}">${l}</button>`).join('')}</div>
-${b?`<ol class="gsteps">
+${b==='ip'?`<ol class="gsteps">
+<li><b>用 Safari 打开</b>（最重要）<br>在微信里点开链接后，点右上角<b>「···」</b>，选<b>「在 Safari 中打开」</b>（或用默认浏览器打开）。微信里面的网页锁屏后常常会停。</li>
+<li><b>不要把 Safari 划掉</b><br>听的时候可以锁屏、可以回主屏幕，但不要在多任务界面把 Safari 往上划走，划走就停了。</li>
+<li><b>注意「低电量模式」</b><br>如果开了<b>「设置」→「电池」→「低电量模式」</b>，后台播放偶尔会被停。老是停的话，先关掉它试试。</li>
+<li><b>用锁屏控制</b><br>锁屏后，在锁屏界面上能看到「同听一道」的播放条，可以直接暂停、继续、换上一篇或下一篇。</li>
+<li><b>试一试</b><br>回到这里点「播放」，锁上屏幕，等五分钟听听还在不在放。</li></ol>`:b?`<ol class="gsteps">
 <li><b>关掉省电限制</b>（最重要）<br>${BATT[b]}</li>
 <li><b>锁住后台</b><br>打开「最近任务」（从屏幕底部往上滑并停一下，或点导航栏的方块键），在 QQ浏览器 的卡片上<b>往下拉</b>或<b>长按</b>，点<b>小锁</b>图标。这样一键清理时不会把它关掉。</li>
 <li><b>允许通知</b><br>打开<b>「设置」→「通知」</b>，找到 QQ浏览器，打开<b>「允许通知」</b>。有些手机要显示"正在播放"的通知，声音才能在后台继续。</li>
 <li><b>试一试</b><br>回到这里点「播放」，锁上屏幕，等五分钟听听还在不在放。</li></ol>`:`<p class="note">点上面你的手机牌子，下面会显示对应的设置步骤。</p>`}
 <hr><h3>如果设置后还会停</h3>
-<div class="gtip"><b>最稳的办法：</b>有网时点「下载到手机」，然后打开手机的<b>「文件管理」→「下载」</b>，点那个录音文件，用手机自带的<b>音乐播放器</b>播放。系统播放器锁屏也能一直放，适合散步时听（这样听不会记进「听道记录」）。</div>
-<p class="note">另外，这一页已经设定好：如果锁屏时被手机停了，一点亮屏幕回到这里，就会从停下的地方自动接着放。</p>`}
+<div class="gtip"><b>最稳的办法：</b>有网时点「下载到手机」，然后${b==='ip'?'打开 iPhone 的<b>「文件」App →「下载项」</b>，点那个录音文件播放':'打开手机的<b>「文件管理」→「下载」</b>，点那个录音文件，用手机自带的<b>音乐播放器</b>播放'}。系统播放器锁屏也能一直放，适合散步时听（这样听不会记进「听道记录」）。</div>
+<p class="note">另外，这一页已经设定好：网络断了一下会自动重新连接，从停下的地方接着放；如果是被手机停了，一点亮屏幕回到这里，也会自动接着放。</p>`}
 function openGuide(){const r=$('#reader');const fs=S.fs||1.15;
   r.innerHTML=`<div class="rbar"><button class="btn ghost" id="rclose">‹ 返回</button><div class="rsize"><button class="btn ghost" id="rminus" aria-label="字变小">A−</button><button class="btn ghost" id="rplus" aria-label="字变大">A+</button></div></div><article class="rbody" style="font-size:${fs}rem"><span class="sprig">${LILY_SPRIG}</span>${guideHTML()}</article>`;
   r.hidden=false;document.body.style.overflow='hidden';
@@ -429,7 +435,7 @@ function play(t,local){
     au.addEventListener('loadedmetadata',()=>{if(p&&p.t>5&&!(S.heard[t.id]&&pct(t)>.97))au.currentTime=p.t},{once:true})}
   au.playbackRate=S.rate;setStatus(au.dataset.local?'':'正在连接，请稍等……');
   const my=++playSeq;const pr=au.play();if(pr&&pr.catch)pr.catch(e=>{if(my!==playSeq||(e&&e.name==='AbortError'))return;onlineFail()});
-  logListen(t);userPaused=false;setMeta(t);
+  logListen(t);userPaused=false;rcTries=0;setMeta(t);
 }
 /* Lock-screen controls (Media Session) and resume after the system pauses us */
 let userPaused=false,sysPaused=false;
@@ -466,7 +472,25 @@ au.onended=()=>{const id=+au.dataset.id;const local=au.dataset.local;if(id>0)S.h
   const nx=S.auto!==false?nextOf(byId.get(id)):null;
   if(nx&&!local){play(nx);soft();setStatus('已自动播放下一篇。')}
   else{soft();if(nx&&local)setStatus('下一篇是「'+nx.title+'」。没网时请点「没网？选手机里下载好的录音来播」再选一次文件。')}};
-au.onerror=()=>{if(au.dataset.local&&au.src!==localUrl)return;onlineFail()};
+au.onerror=()=>{if(au.dataset.local&&au.src!==localUrl)return;if(!au.dataset.local&&tryRecover('error'))return;onlineFail()};
+/* Network hiccups (walking between signals, lock screen): reconnect and carry on from the same spot */
+let rcTimer=0,rcTries=0,stallT=0,playedId=0;
+function tryRecover(why){const id=+au.dataset.id,t=byId.get(id);if(!t||id<0||au.dataset.local||userPaused||playedId!==id)return false;
+  if(rcTries>=8)return false;if(rcTimer)return true;
+  const at=au.currentTime||((S.pos[id]||{}).t)||0;rcTries++;
+  const wait=navigator.onLine===false?0:Math.min(2000*rcTries,15000);
+  setStatus('网络不太稳，正在重新连接……');
+  const go=()=>{rcTimer=0;if(userPaused||+au.dataset.id!==id)return;
+    if(navigator.onLine===false){rcTimer=-1;return}
+    au.src=mp3(t)+(mp3(t).includes('?')?'&':'?')+'r='+Date.now();
+    au.addEventListener('loadedmetadata',()=>{try{if(at>1)au.currentTime=at}catch(e){}},{once:true});
+    const pr=au.play();if(pr&&pr.catch)pr.catch(e=>{if(e&&e.name==='AbortError')return;if(!tryRecover('play'))onlineFail()})};
+  rcTimer=setTimeout(go,wait);return true}
+au.addEventListener('playing',()=>{playedId=+au.dataset.id;rcTries=0;clearTimeout(stallT);stallT=0;if(rcTimer>0){clearTimeout(rcTimer)}rcTimer=0});
+const watchStall=()=>{if(au.dataset.local||userPaused||au.paused)return;clearTimeout(stallT);
+  stallT=setTimeout(()=>{if(!userPaused&&!au.paused&&au.readyState<3)tryRecover('stall')},12000)};
+au.addEventListener('waiting',watchStall);au.addEventListener('stalled',watchStall);
+window.addEventListener('online',()=>{if(rcTimer===-1){rcTimer=0;rcTries=Math.max(0,rcTries-1);tryRecover('online')}});
 let localUrl=null;
 $('#localf').onchange=()=>{const f=$('#localf').files[0];if(!f)return;
   const m=f.name.match(/(SC|FL|WA)\d{2}-\d{3}/i);let t=m&&TALKS.find(x=>x.file.toUpperCase().startsWith(m[0].toUpperCase()));
