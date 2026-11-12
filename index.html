@@ -109,7 +109,17 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .seg2 button{border:0;background:transparent;min-height:52px;font-size:1.05rem;color:var(--muted);cursor:pointer}
 .seg2 button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
 .mini{display:flex;align-items:center;gap:10px;width:100%;border:0;border-radius:14px;background:var(--accent);color:var(--accent-ink);padding:10px 14px;min-height:52px;cursor:pointer;text-align:left}
-.mini svg{width:22px;height:22px;flex-shrink:0}.mini span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.mini b{font-weight:400;opacity:.85}
+.mini svg{width:22px;height:22px;flex-shrink:0}
+.mini{cursor:default;padding:8px 10px;gap:8px;box-sizing:border-box;max-width:100%}
+.mini button{font:inherit;color:inherit;background:none;border:0;cursor:pointer;padding:0}
+.mini .mbtn{width:40px;height:40px;border-radius:50%;background:color-mix(in srgb,var(--accent-ink) 18%,transparent);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.mini .mmid{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.mini .mt{text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;width:100%}
+.mini .mrow{display:flex;align-items:center;gap:8px}
+.mini .mseek{flex:1;min-width:0;height:22px;accent-color:var(--accent-ink);margin:0}
+.mini .mtime{font-size:.8em;opacity:.85;white-space:nowrap;font-variant-numeric:tabular-nums}
+.mini .mact{opacity:.9;flex-shrink:0;padding:6px 4px}
+.talk.on .ic{background:var(--accent);color:var(--accent-ink)}.mini .mt{min-width:0}.mini b{font-weight:400;opacity:.85}
 .reader{position:fixed;inset:0;z-index:20;background:var(--bg);overflow-y:auto;-webkit-overflow-scrolling:touch}
 .rbar{position:sticky;top:0;display:flex;justify-content:space-between;align-items:center;gap:10px;background:var(--bg);padding-top:calc(10px + env(safe-area-inset-top,0px));padding-bottom:10px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));border-bottom:1px solid var(--rule)}
 .rsize{display:flex;gap:8px}.rsize .btn{min-width:58px;font-family:var(--f-num)}
@@ -272,8 +282,10 @@ ${(()=>{const nx=nextOf(t);return `<div class="row auto"><button class="toggle" 
 ${t.id>0?`<div class="row">${S.dl[t.id]?`<a class="btn ghost done-btn" id="bdl" href="${mp3(t)}" target="_blank" rel="noopener">${ICO.ok}已下载<span class="dl">（约 ${mb(t)}）</span></a>`:`<a class="btn ghost" id="bdl" href="${mp3(t)}" target="_blank" rel="noopener">${ICO.dl}下载到手机<span class="dl">${mb(t)?'（约 '+mb(t)+'）':''}</span></a>`}${PS[t.id]?`<button class="btn ghost" id="bps">${ICO.book}看经文</button>`:''}${HO[t.id]?`<button class="btn ghost" id="bho">${ICO.doc}看讲义</button>`:(t.sheet?`<a class="btn ghost" href="${esc(t.sheet)}" target="_blank" rel="noopener">讲义</a>`:'')}</div>
 ${needLocal(t)?(S.dl[t.id]?`<div class="offbox"><button class="btn" id="blocal">${ICO.folder}没网？选手机里下载好的录音来播</button><p class="note">点上面的按钮，在手机的「下载」文件夹里选 <b class="code">${esc(t.file)}</b>，就能接着听，进度和听道记录照常保存。</p></div>`:`<div class="offbox"><p class="note">这一篇还没下载，没网的时候听不了。有网时点「下载到手机」，以后没网也能听。</p></div>`):(S.dl[t.id]?'':`<p class="note">想没网的时候也能听，先点「下载到手机」。</p>`)}`:''}</section>`}
 
+function isOn(t){return +au.dataset.id===t.id&&!au.paused}
+function rowIco(t){return isOn(t)?ICO.pause:(+au.dataset.id===t.id||!S.heard[t.id])?ICO.play:ICO.ok}
 function row(t){const p=pct(t),heard=S.heard[t.id];
-  return `<button class="talk${heard?' heard':''}${S.cur===t.id?' cur':''}" data-id="${t.id}"><span class="ic">${heard?ICO.ok:ICO.play}</span><span class="tx"><span class="t">${esc(t.title)}${t.type!=='SC'?'<span class="tag">专题</span>':''}</span><span class="m">${[t.ref,dzh(t.date),t.speaker,mins(t)].filter(Boolean).map(esc).join(' · ')}</span>${p>0.02&&!heard?`<span class="pg"><i style="width:${p*100}%"></i></span>`:''}</span>${heard?'<span class="badge">听完</span>':''}</button>`}
+  return `<button class="talk${heard?' heard':''}${S.cur===t.id?' cur':''}${isOn(t)?' on':''}" data-id="${t.id}" aria-label="${isOn(t)?'暂停':'播放'}：${esc(t.title)}"><span class="ic">${rowIco(t)}</span><span class="tx"><span class="t">${esc(t.title)}${t.type!=='SC'?'<span class="tag">专题</span>':''}</span><span class="m">${[t.ref,dzh(t.date),t.speaker,mins(t)].filter(Boolean).map(esc).join(' · ')}</span>${p>0.02&&!heard?`<span class="pg"><i style="width:${p*100}%"></i></span>`:''}</span>${heard?'<span class="badge">听完</span>':''}</button>`}
 
 function body(){
   if(tab==='now')return nowCard()+recentMini();
@@ -305,9 +317,20 @@ function logRes(){if(!S.log.length)return `<section class="panel"><h2>还没有�
   if(!recent.length)return `<section class="panel"><p>听道记录里没有找到相关的讲道，换个词试试。</p></section>`;
   return `<div class="group">${[...new Set(recent.map(x=>x.l.day))].map(day=>`<h3>${dzh(day)}</h3><div class="list">${recent.filter(x=>x.l.day===day).map(x=>row(x.t)).join('')}</div>`).join('')}</div>`}
 function miniHTML(){const id=+au.dataset.id;if(tab==='now'||!id)return'';const t=byId.get(id);if(!t)return'';const on=!au.paused;
-  return `<button class="mini" id="bmini">${on?ICO.pause:ICO.play}<span>${on?'正在播放':'已暂停'}：${esc(t.title)}</span><b>${on?'暂停':'继续'}</b></button>`}
+  const d=au.duration||((S.pos[id]||{}).d)||t.dur||0,c=au.currentTime||((S.pos[id]||{}).t)||0;
+  return `<div class="mini"><button class="mbtn" id="bmini" aria-label="${on?'暂停':'继续播放'}">${on?ICO.pause:ICO.play}</button>
+<div class="mmid"><button class="mt" id="bmnow" aria-label="打开正在收听">${on?'正在播放':'已暂停'}：${esc(t.title)}</button>
+<div class="mrow"><input class="mseek" id="mseek" type="range" min="0" max="${Math.round(d)}" value="${Math.round(c)}" step="1" aria-label="播放进度"><span class="mtime"><span id="mcur">${fmt(c)}</span> / <span id="mdur">${d?fmt(d):'--:--'}</span></span></div></div>
+<button class="mact" id="bmini2">${on?'暂停':'继续'}</button></div>`}
 function updateMini(){const m=$('#minibox');if(!m)return;m.innerHTML=miniHTML();wireMini()}
-function wireMini(){const b=$('#bmini');if(b)b.onclick=()=>{if(au.paused){userPaused=false;const pr=au.play();if(pr&&pr.catch)pr.catch(()=>{})}else userPause()}}
+function miniToggle(){if(au.paused){userPaused=false;const pr=au.play();if(pr&&pr.catch)pr.catch(()=>{})}else userPause()}
+function wireMini(){const b=$('#bmini');if(!b)return;b.onclick=miniToggle;$('#bmini2').onclick=miniToggle;
+  $('#bmnow').onclick=()=>{tab='now';q='';render();window.scrollTo({top:0,behavior:'smooth'})};
+  const sk=$('#mseek');sk.oninput=()=>{const id=+au.dataset.id;if(isFinite(au.duration)&&au.duration){au.currentTime=+sk.value}else{S.pos[id]=Object.assign(S.pos[id]||{},{t:+sk.value});save()}$('#mcur').textContent=fmt(+sk.value)}}
+/* refresh list icons and the mini bar without rebuilding the page */
+function updateRows(){document.querySelectorAll('.talk[data-id]').forEach(b=>{const t=byId.get(+b.dataset.id);if(!t)return;
+  b.classList.toggle('on',isOn(t));b.classList.toggle('cur',S.cur===t.id);const ic=b.querySelector('.ic');if(ic)ic.innerHTML=rowIco(t);
+  b.setAttribute('aria-label',(isOn(t)?'暂停':'播放')+'：'+t.title)})}
 function refreshRes(){const r=$('#res');if(!r)return;r.innerHTML=tab==='log'?logRes():timeRes();wireRows(r)}
 function groupBySeries(list){const ss=[...new Set(list.map(t=>t.series))];
   return ss.map(s=>`<div class="group"><h3>${esc(s)}</h3><div class="list">${list.filter(t=>t.series===s).map(row).join('')}</div></div>`).join('')}
@@ -352,7 +375,10 @@ function wire(){
 }
 function wireRows(root){
   if(root.querySelector('#more'))root.querySelector('#more').onclick=()=>{shown+=30;refreshRes()};
-  root.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{if(selMode&&tab==='dl'){const i=+b.dataset.id;sel.has(i)?sel.delete(i):sel.add(i);confirmDel=false;render();return}const t=byId.get(+b.dataset.id);tab='now';if(navigator.onLine===false&&S.dl[t.id]){S.cur=t.id;save();render();window.scrollTo({top:0,behavior:'smooth'});setStatus('现在没有网络。点下面的「没网？选手机里下载好的录音来播」就能听。');return}play(t);render();window.scrollTo({top:0,behavior:'smooth'})});
+  root.querySelectorAll('[data-id]').forEach(b=>b.onclick=()=>{if(selMode&&tab==='dl'){const i=+b.dataset.id;sel.has(i)?sel.delete(i):sel.add(i);confirmDel=false;render();return}const t=byId.get(+b.dataset.id);
+    if(+au.dataset.id===t.id&&au.src){miniToggle();return}
+    if(navigator.onLine===false&&S.dl[t.id]){tab='now';S.cur=t.id;save();render();window.scrollTo({top:0,behavior:'smooth'});setStatus('现在没有网络。点下面的「没网？选手机里下载好的录音来播」就能听。');return}
+    play(t);soft()});
 }
 function wireRest(){
   document.querySelectorAll('[data-rate]').forEach(b=>b.onclick=()=>{S.rate=+b.dataset.rate;au.playbackRate=S.rate;save();render()});
@@ -464,8 +490,9 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&sysPaused
 let lastSave=0;
 au.ontimeupdate=()=>{const id=+au.dataset.id,t=byId.get(id);if(!t)return;const d=au.duration||0;
   if(id>0&&Date.now()-lastSave>3000){S.pos[id]={t:au.currentTime,d};if(d&&au.currentTime/d>.9)S.heard[id]=1;save();lastSave=Date.now();msPos()}
+  if(tab!=='now'){const ms=$('#mseek');if(ms&&document.activeElement!==ms){if(d)ms.max=Math.round(d);ms.value=Math.round(au.currentTime)}const a=$('#mcur'),b=$('#mdur');if(a)a.textContent=fmt(au.currentTime);if(b&&d)b.textContent=fmt(d)}
   if(S.cur===id){const sk=$('#seek');if(sk&&document.activeElement!==sk){sk.max=Math.round(d);sk.value=Math.round(au.currentTime)}const a=$('#tcur'),b=$('#tdur');if(a)a.textContent=fmt(au.currentTime);if(b&&d)b.textContent=fmt(d)}};
-const soft=()=>tab==='now'?render():updateMini();
+const soft=()=>{if(tab==='now')render();else{updateMini();updateRows()}};
 au.onplaying=()=>{const l=au.dataset.local;soft();if(l)setStatus('正在播放手机里的录音，没网也能听。')};
 au.onpause=()=>{const id=+au.dataset.id;if(id>0){S.pos[id]={t:au.currentTime,d:au.duration||0};save()}soft()};
 au.onended=()=>{const id=+au.dataset.id;const local=au.dataset.local;if(id>0)S.heard[id]=1;S.pos[id]={t:0,d:au.duration||0};save();
