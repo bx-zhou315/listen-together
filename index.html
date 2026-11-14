@@ -274,7 +274,7 @@ let failId=0;
 function needLocal(t){return navigator.onLine===false||failId===t.id||(!!au.dataset.local&&+au.dataset.id===t.id)}
 function nowCard(){const t=cur();if(!t)return'';const p=S.pos[t.id]||{};const playing=!au.paused&&au.dataset.id==t.id;
   const next=nextOf(t), auto=S.auto!==false;
-  return `<section class="now" aria-label="正在收听"><div class="now-heading"><img class="player-sprig" src="assets/olive-branch-wide.webp" width="418" height="235" alt=""><span class="lab">${S.cur?'正在收听':'最新一篇'}</span><h2>${esc(t.title)}</h2>
+  return `<section class="now" aria-label="正在收听"><div class="now-heading"><img class="player-sprig" src="assets/olive-branch-wide.webp" width="418" height="235" alt=""><h2>${esc(t.title)}</h2>
 <div class="meta">${t.ref?`<span class="scripture-ref">${esc(t.ref)}</span>`:''}${t.speaker?`<span>讲员 ${esc(t.speaker)}</span>`:''}<span>${dzh(t.date)}</span>${t.dur?`<span class="duration">${mins(t)}</span>`:''}</div>
 <p class="sermon-series"><span>系列</span><span>${esc(t.series)}</span></p></div>
 <div class="timeline"><input class="seek" id="seek" type="range" style="--progress:${Math.min(100,100*(p.t||0)/(p.d||t.dur||1))}%" min="0" max="${Math.round(p.d||t.dur||0)}" value="${Math.round(p.t||0)}" step="1" aria-label="播放进度">
@@ -283,7 +283,7 @@ ${(()=>{const pv=prevOf(t),nx=nextOf(t)||nextAny(t);return `<div class="ctrl"><b
 <div class="play-settings"><div class="speed" role="group" aria-label="语速">${[0.5,0.75,1,1.25,1.5].map(r=>`<button data-rate="${r}" aria-pressed="${S.rate===r}">${r}×</button>`).join('')}</div>
 <div class="auto-settings">
   <button class="toggle" id="bauto" role="switch" aria-checked="${auto}" aria-describedby="auto-note">连续播放<span class="knob" aria-hidden="true"></span></button>
-  <p class="note auto-note" id="auto-note">${auto?(next?`听完自动播放下一篇：<span>${esc(next.title)}</span>`:'这是本系列的最后一篇，听完会停下'):'听完这一篇就停下'}</p>
+  <p class="note auto-note sr-only" id="auto-note">${auto?(next?`听完自动播放下一篇：<span>${esc(next.title)}</span>`:'这是本系列的最后一篇，听完会停下'):'听完这一篇就停下'}</p>
 </div></div>
 <p class="status" id="st">${p.t>5&&!playing?'上次听到 '+fmt(p.t)+'，点「继续听」接着听。':''}</p>
 ${t.id>0?`<div class="player-actions">${S.dl[t.id]?`<a class="btn ghost done-btn" id="bdl" href="${mp3(t)}" target="_blank" rel="noopener">${ICO.ok}<span>已下载${mb(t)?`<small class="dl">约 ${mb(t)}</small>`:''}</span></a>`:`<a class="btn ghost" id="bdl" href="${mp3(t)}" target="_blank" rel="noopener">${ICO.dl}<span>下载到手机${mb(t)?`<small class="dl">约 ${mb(t)}</small>`:''}</span></a>`}${PS[t.id]?`<button class="btn ghost" id="bps">${ICO.book}看经文</button>`:''}${HO[t.id]?`<button class="btn ghost" id="bho">${ICO.doc}看讲义</button>`:(t.sheet?`<a class="btn ghost" href="${esc(t.sheet)}" target="_blank" rel="noopener">${ICO.doc}看讲义</a>`:'')}</div>
@@ -332,16 +332,12 @@ function logRes(){if(!S.log.length)return `<section class="panel"><h2>还没有�
   if(!recent.length)return `<section class="panel"><p>听道记录里没有找到相关的讲道，换个词试试。</p></section>`;
   return `<div class="group">${[...new Set(recent.map(x=>x.l.day))].map(day=>`<h3>${dzh(day)}</h3><div class="list">${recent.filter(x=>x.l.day===day).map(x=>row(x.t)).join('')}</div>`).join('')}</div>`}
 function miniHTML(){const id=+au.dataset.id;if(tab==='now'||!id)return'';const t=byId.get(id);if(!t)return'';const on=!au.paused;
-  const d=au.duration||((S.pos[id]||{}).d)||t.dur||0,c=au.currentTime||((S.pos[id]||{}).t)||0;
-  return `<div class="mini"><button class="mbtn" id="bmini" aria-label="${on?'暂停':'继续播放'}">${on?ICO.pause:ICO.play}</button>
-<div class="mmid"><button class="mt" id="bmnow" aria-label="打开正在收听">${on?'正在播放':'已暂停'}：${esc(t.title)}</button>
-<div class="mrow"><input class="mseek" id="mseek" type="range" min="0" max="${Math.round(d)}" value="${Math.round(c)}" step="1" aria-label="播放进度"><span class="mtime"><span id="mcur">${fmt(c)}</span> / <span id="mdur">${d?fmt(d):'--:--'}</span></span></div></div>
-<button class="mact" id="bmini2">${on?'暂停':'继续'}</button></div>`}
+  return `<div class="mini" role="region" aria-label="当前播放"><button class="mt" id="bmnow" aria-label="返回收听：${esc(t.title)}"><span class="mini-title">${esc(t.title)}</span><span class="mini-state">${on?'正在播放':'已暂停'}</span></button><button class="mbtn" id="bmini" aria-label="${on?'暂停':'继续播放'}">${on?ICO.pause:ICO.play}</button></div>`}
 function updateMini(){const m=$('#minibox');if(!m)return;m.innerHTML=miniHTML();wireMini()}
 function miniToggle(){if(au.paused){userPaused=false;const pr=au.play();if(pr&&pr.catch)pr.catch(()=>{})}else userPause()}
-function wireMini(){const b=$('#bmini');if(!b)return;b.onclick=miniToggle;$('#bmini2').onclick=miniToggle;
+function wireMini(){const b=$('#bmini');if(!b)return;b.onclick=miniToggle;
   $('#bmnow').onclick=()=>{tab='now';q='';render();window.scrollTo({top:0,behavior:'smooth'})};
-  const sk=$('#mseek');sk.oninput=()=>{const id=+au.dataset.id;if(isFinite(au.duration)&&au.duration){au.currentTime=+sk.value}else{S.pos[id]=Object.assign(S.pos[id]||{},{t:+sk.value});save()}$('#mcur').textContent=fmt(+sk.value)}}
+}
 /* refresh list icons and the mini bar without rebuilding the page */
 function updateRows(){document.querySelectorAll('.talk[data-id]').forEach(b=>{const t=byId.get(+b.dataset.id);if(!t)return;
   b.classList.toggle('on',isOn(t));b.classList.toggle('cur',S.cur===t.id);const ic=b.querySelector('.ic');if(ic)ic.innerHTML=rowIco(t);
@@ -355,7 +351,7 @@ const NAV_ICONS={
   series:'<svg viewBox="0 0 24 24"><path d="m3 8 9-5 9 5-9 5-9-5Zm0 5 9 5 9-5M3 17l9 5 9-5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>',
   history:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" fill="none" stroke="currentColor" stroke-width="1.7"/><path d="M12 6.5v6l4 2" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>'
 };
-const TABS=[['now','正在收听',NAV_ICONS.listen],['cat','讲道分类',NAV_ICONS.series],['dl','已下载',ICO.dl],['log','听道记录',NAV_ICONS.history]];
+const TABS=[['now','收听',NAV_ICONS.listen],['cat','分类',NAV_ICONS.series],['dl','下载',ICO.dl],['log','记录',NAV_ICONS.history]];
 function recentMini(){const ids=[...new Set(S.log.map(l=>l.id))].filter(id=>id!==cur().id&&byId.get(id)).slice(0,5);
   return ids.length?`<div class="group"><h3 class="recent-heading">最近听过</h3><div class="list">${ids.map(id=>row(byId.get(id))).join('')}</div></div>`:''}
 function nextOf(t){if(!t||t.id<0||t.series==='单篇讲道')return null;const ser=sorted.filter(x=>x.series===t.series).sort((a,b)=>a.date.localeCompare(b.date)||a.id-b.id);const i=ser.findIndex(x=>x.id===t.id);return i>=0?ser[i+1]||null:null}
@@ -365,14 +361,14 @@ function nextAny(t){if(!t||t.id<0)return null;const i=sorted.findIndex(x=>x.id==
 const ZOOM=[['小',.9],['中',1],['大',1.15],['特大',1.3]];
 function applyZoom(){document.documentElement.style.setProperty('--zoom',S.zoom||1)}
 function render(){applyZoom();
-  $('#app').innerHTML=`<header class="hd"><img class="brand-art" src="assets/hero-lily-collage.webp" width="845" height="527" alt="" fetchpriority="high"><p class="eyebrow">ST HELEN'S · 福音之家</p><h1><span>同听一道</span></h1><p class="tagline"><span class="cl">信道是从听道来的，</span><span class="cl">听道是从基督的话来的。</span><span class="ref">（罗马书 10:17）</span></p>
+  $('#app').innerHTML=`<header class="hd"><img class="brand-art" src="assets/hero-lily-collage.webp" width="845" height="527" alt="" fetchpriority="high"><p class="eyebrow">ST HELEN'S · 福音之家</p><h1><span>同听一道</span></h1>
 <div class="zbar" role="group" aria-label="字号">${ZOOM.map(([l,z],i)=>`<button data-zoom="${z}" aria-pressed="${(S.zoom||1)===z}" aria-label="字号：${l}"><span aria-hidden="true">${['A−','A','A+','A++'][i]}</span></button>`).join('')}</div></header>
 
-<nav class="tabs" role="tablist">${TABS.map(([k,l,icon])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${tab===k}"><span class="tab-icon" aria-hidden="true">${icon}</span><span>${l}</span></button>`).join('')}</nav>
+<nav class="tabs" role="tablist">${TABS.map(([k,l,icon])=>`<button class="tab" role="tab" data-tab="${k}" aria-selected="${tab===k}" aria-label="${({now:'正在收听',cat:'讲道分类',dl:'已下载',log:'听道记录'})[k]}"><span class="tab-icon" aria-hidden="true">${icon}</span><span>${l}</span></button>`).join('')}</nav>
 <div id="minibox">${miniHTML()}</div>
 ${tab==='cat'?`<div class="seg2" role="group" aria-label="分类方式"><button data-sub="time" aria-pressed="${sub==='time'}">按时间</button><button data-sub="book" aria-pressed="${sub==='book'}">按书卷</button></div>`:''}
 <div id="body" class="group">${body()}</div>
-<div class="foot">${tab==='cat'?`<p>新的讲道每周日会放到教会网站上。这里没有的，可以去网站的中文聚会页面找：</p><a class="btn ghost" href="${SITE}/sunday/2pm/" target="_blank" rel="noopener">打开「福音之家」网页</a>`:''}
+<div class="foot"><p class="note foot-verse">“信道是从听道来的，听道是从基督的话来的。”（罗马书 10:17）</p>${tab==='cat'?`<p>新的讲道每周日会放到教会网站上。这里没有的，可以去网站的中文聚会页面找：</p><a class="btn ghost" href="${SITE}/sunday/2pm/" target="_blank" rel="noopener">打开「福音之家」网页</a>`:''}
 <p class="note">讲道录音和讲义来自伦敦 St Helen's Bishopsgate 教会（st-helens.org.uk），版权归教会所有。本页为家人和少数教会朋友整理的非商业听道页面，录音直接从教会网站播放。</p></div>`;
   wire();
 }
