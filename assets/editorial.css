@@ -501,3 +501,102 @@ body {
   :root:not([data-theme="light"]) :is(.brand-art, .player-sprig) { filter: brightness(.79) saturate(.8); }
 }
 :root[data-theme="dark"] :is(.brand-art, .player-sprig) { filter: brightness(.79) saturate(.8); }
+
+/* UI simplification: preserve generous text and touch targets for older listeners. */
+.hd {
+  grid-template-areas: "church church" "title art" "size art";
+  align-items: start;
+  row-gap: 4px;
+}
+.hd .zbar {
+  margin-block: 14px 8px;
+  border-radius: 15px;
+  box-shadow: none;
+}
+.zbar button { min-height: 48px; padding-inline: 13px; }
+.tabs { margin-top: 6px; }
+.tab { white-space: nowrap; min-width: 0; gap: 0; }
+.tab-icon { display: none !important; }
+.tab > span:last-child { white-space: nowrap; overflow-wrap: normal; }
+.tab[aria-selected="true"] > span:last-child,
+.zbar button[aria-pressed="true"] span { text-decoration: none; }
+.tab:focus-visible, .zbar button:focus-visible {
+  outline: 3px solid var(--gold);
+  outline-offset: 2px;
+}
+.now-heading { gap: 7px; }
+.now-heading h2 { margin-top: 0; }
+.auto-note.sr-only {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  border: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+.auto-settings { position: relative; }
+.status:empty { display: none; }
+.foot-verse { color: var(--muted); line-height: 1.55; margin-block: 0 12px; }
+.mini {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: 10px;
+  min-height: 64px;
+  padding: 7px 9px 7px 14px;
+  box-sizing: border-box;
+  border: 1px solid var(--paper-edge);
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--ink);
+  box-shadow: 0 3px 10px rgb(62 52 27 / 9%);
+}
+.mini .mt {
+  grid-area: 1 / 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 1px;
+  min-width: 0;
+  width: 100%;
+  min-height: 48px;
+  padding: 2px 0;
+  text-align: left;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  background: transparent;
+  color: var(--ink);
+}
+.mini-title { font-weight: 600; line-height: 1.3; overflow-wrap: anywhere; }
+.mini-state { font-size: .875rem; line-height: 1.25; color: var(--muted); }
+.mini .mbtn {
+  grid-area: 1 / 2;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 48px;
+  height: 48px;
+  min-height: 48px;
+  border-radius: 50%;
+  border: 0;
+  background: var(--accent);
+  color: var(--accent-ink);
+  padding: 0;
+}
+.mini .mbtn svg { width: 23px; height: 23px; }
+.mini :focus-visible { outline: 3px solid var(--gold); outline-offset: 2px; }
+@container (max-width: 22.5rem) {
+  .tab { flex-direction: row; padding: 3px 1px; font-size: clamp(.9rem, 4.3cqw, 1.125rem); }
+}
+@container (max-width: 21rem) {
+  .hd { grid-template-areas: "church church" "title art" "size size"; }
+  .hd .zbar { margin-top: 9px; }
+  .mini { gap: 7px; padding-inline-start: 10px; }
+}
+@container (min-width: 34rem) {
+  .hd { grid-template-areas: "church art" "title art" "size art"; }
+}
