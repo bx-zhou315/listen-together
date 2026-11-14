@@ -19,7 +19,8 @@ A mobile-friendly listening app for the Sunday Mandarin talks of St Helen's Bish
 
 | File | Purpose |
 |---|---|
-| `index.html` | The whole app in one self-contained page (talk list, handouts, passages, font subset, illustrations) |
+| `index.html` | App, talk list, handouts, passages and embedded font subset |
+| `assets/` | Botanical styles, paper texture, supplied lily collage, olive branches and gold brushstroke, plus six covers reused by sermon series |
 | `latest.json` | Talks published since the page was built; loaded by the page at start-up |
 | `update.py` | Fetches new talks from the church's public resource library and writes `latest.json` |
 | `.github/workflows/update.yml` | Runs `update.py` every Sunday evening and every morning, so talks uploaded late in the week are still picked up |
