@@ -7,7 +7,7 @@ A mobile-friendly listening app for the Sunday Mandarin talks of St Helen's Bish
 ## Features
 
 - 200+ Mandarin talks from November 2022 onwards, browsable by date or by Bible book, with search
-- In-page player with playback speed, previous/next talk, continuous play within a series, and resume from where you stopped
+- In-page player with playback speed, previous/next talk, series playback, single-talk repeat, archive shuffle, and resume from where you stopped
 - Lock-screen controls, plus automatic reconnection when the network drops mid-talk (useful when listening on a walk)
 - The Bible passage and sermon handout for each talk, re-typeset in a large Kaiti font for older readers
 - Listening history, download to phone, and offline playback of downloaded recordings

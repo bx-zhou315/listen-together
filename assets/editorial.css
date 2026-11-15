@@ -68,18 +68,18 @@ body {
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-areas: "church church" "title art" "size art";
   align-items: start;
-  gap: 3px 0;
+  gap: 3px 8px;
   padding: 4px 2px 2px;
   isolation: isolate;
-  --art-width: clamp(84px, 32cqw, 320px);
+  --art-width: clamp(88px, 31cqw, 320px);
 }
 .hd .eyebrow { grid-area: church; padding: 0; }
 .hd h1 {
   grid-area: title;
   padding: 0;
-  font-size: 2.5rem;
-  letter-spacing: .045em;
-  line-height: 1.16;
+  font-size: min(2.5rem, 14.5cqw);
+  letter-spacing: .025em;
+  line-height: 1.14;
   overflow-wrap: anywhere;
 }
 .hd h1 span {
@@ -94,7 +94,7 @@ body {
   inset: auto -1% -.03em -2%;
   height: .38em;
   background: url("gold-brushstroke.webp") center / 100% 100% no-repeat;
-  opacity: .73;
+  opacity: .6;
 }
 .hd .zbar { grid-area: size; justify-self: start; }
 .brand-art {
@@ -124,7 +124,7 @@ body {
   border-radius: 9px;
   min-height: 48px;
 }
-.zbar button[aria-pressed="true"],
+.zbar button[aria-pressed="true"] { background: var(--accent); }
 .ctrl .play {
   background: var(--paper-grain), linear-gradient(153deg, var(--accent-sheen), var(--accent) 83%);
 }
@@ -158,15 +158,6 @@ body {
   border-inline-start: 1px solid var(--rule);
   pointer-events: none;
 }
-.zbar button[aria-pressed="true"] span,
-.seg2 button[aria-pressed="true"],
-.chip[aria-pressed="true"],
-.bchips button[aria-pressed="true"] {
-  text-decoration: underline;
-  text-underline-offset: .22em;
-  text-decoration-thickness: .09em;
-}
-
 #minibox {
   position: fixed;
   z-index: 6;
@@ -222,24 +213,55 @@ html:has(#minibox:not(:empty)) { scroll-padding-bottom: calc(76px + env(safe-are
   box-shadow: inset 0 1px 1px var(--card-glow), 0 3px 5px rgb(62 52 27 / 7%), 0 10px 21px rgb(66 49 25 / 8%);
   overflow: visible;
 }
-.now-heading { position: relative; display: grid; gap: 3px; --sprig-gutter: clamp(76px, 25cqw, 266px); }
-.now-heading > :not(img) { position: relative; z-index: 1; }
+.now-heading {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "title sprig" "ref sprig";
+  align-items: start;
+  gap: 3px 6px;
+}
 .player-sprig {
-  position: absolute;
-  width: clamp(65px, 25cqw, 260px);
+  grid-area: sprig;
+  width: clamp(54px, 18cqw, 154px);
   height: auto;
-  top: 0;
-  right: 0;
   opacity: .85;
   pointer-events: none;
 }
-.now-heading { padding-right: var(--sprig-gutter); }
-.now-heading .meta, .now-heading .sermon-series { margin-inline-end: calc(0px - var(--sprig-gutter)); }
-
-.now h2 { padding: 0; margin-top: 2px; font-weight: 600; line-height: 1.24; }
+.now h2 { grid-area: title; padding: 0; margin-top: 2px; font-weight: 600; line-height: 1.24; }
 .now .meta { gap: 1px 12px; line-height: 1.4; }
-.scripture-ref { color: var(--accent); font-weight: 600; }
+.scripture-ref {
+  grid-area: ref;
+  color: var(--accent);
+  font-size: 1.125rem;
+  font-weight: 600;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
 .duration { white-space: nowrap; }
+.sermon-details > summary {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: fit-content;
+  min-height: 48px;
+  padding-inline: 4px;
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 1.0625rem;
+  list-style: none;
+  cursor: pointer;
+}
+.sermon-details > summary::-webkit-details-marker { display: none; }
+.sermon-details > summary::after {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border: solid currentColor;
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+.sermon-details[open] > summary::after { transform: rotate(225deg); }
+.sermon-details .meta { margin-bottom: 5px; }
 .sermon-series {
   display: flex;
   align-items: baseline;
@@ -314,33 +336,26 @@ html:has(#minibox:not(:empty)) { scroll-padding-bottom: calc(76px + env(safe-are
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 4px 16px;
+  gap: 6px 8px;
+  font-size: 1.125rem;
 }
 .speed {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  font-size: 1.125rem;
+  gap: 4px;
 }
-.speed select {
+.play-settings select {
   min-width: 48px;
   min-height: 48px;
-  padding-inline: 5px;
+  padding-inline: 3px;
   border: 1px solid var(--control);
   border-radius: 9px;
   background: var(--paper);
   color: var(--ink);
-  font: 1.125rem var(--f-num);
+  font: inherit;
   cursor: pointer;
 }
-.toggle {
-  padding: 0 4px;
-  border: 1px solid transparent;
-  background: transparent;
-}
-.toggle .knob { order: 2; width: 39px; height: 23px; }
-.toggle .knob::after { width: 17px; height: 17px; }
-.toggle[aria-checked="true"] .knob::after { left: 19px; }
+.speed select { inline-size: 3.45em; font-family: var(--f-num); }
 .player-actions {
   display: flex;
   flex-wrap: wrap;
@@ -458,13 +473,10 @@ html:has(#minibox:not(:empty)) { scroll-padding-bottom: calc(76px + env(safe-are
   .tab-icon, .tab-full { display: none; }
   .tab-short { display: block; }
 }
+@container (max-width: 335px) {
+  .hd { grid-template-areas: "church church" "title art" "size size"; }
+}
 @container (max-width: 21rem) {
-  .hd { --art-width: clamp(62px, 24cqw, 84px); grid-template-areas: "church church" "title art" "size size"; }
-  .hd h1 { font-size: 2.35rem; letter-spacing: .025em; }
-  .brand-art { align-self: start; }
-  .now-heading { padding-right: 0; }
-  .now-heading .meta, .now-heading .sermon-series { margin-inline-end: 0; }
-  .player-sprig { width: 58px; opacity: .64; }
   .now { padding: 11px; }
   .ctrl { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .ctrl .play { flex-wrap: wrap; column-gap: 3px; }
@@ -498,7 +510,6 @@ html:has(#minibox:not(:empty)) { scroll-padding-bottom: calc(76px + env(safe-are
 @container (min-width: 43rem) {
   .hd {
     gap: 3px 16px;
-    grid-template-columns: minmax(0, 1fr) auto;
   }
   .hd .eyebrow { display: flex; gap: 14px; align-items: center; font-size: 1.125rem; }
   .hd .eyebrow::after { content: ""; width: 72px; height: 1px; background: linear-gradient(90deg,var(--control),transparent); }
