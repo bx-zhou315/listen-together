@@ -40,7 +40,7 @@ p{margin:0}
 button{font:inherit;color:inherit}
 a{color:var(--accent)}
 #minibox:empty,.status:empty{display:none}
-:where(button,a,input,select):focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+:where(button,a,input,select,summary):focus-visible{outline:3px solid var(--focus);outline-offset:2px}
 .sub{color:var(--muted);font-size:.9rem}
 .muted{color:var(--muted)}
 .btn{box-sizing:border-box;border:1px solid transparent;border-radius:11px;min-height:52px;min-width:48px;padding:9px 14px;background:var(--accent);color:var(--accent-ink);cursor:pointer;font-size:1.125rem;line-height:1.35;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;text-align:center;max-width:100%}
@@ -163,11 +163,6 @@ body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset
 .zoom{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
 .zoom button{border:1.5px solid var(--rule);background:var(--paper);border-radius:10px;min-height:40px;min-width:46px;padding:2px 10px;cursor:pointer;color:var(--muted);font-size:.9rem}
 .zoom button[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
-.toggle{display:inline-flex;align-items:center;gap:10px;flex-shrink:0;border:1px solid var(--control);background:var(--paper);border-radius:999px;min-height:48px;padding:4px 14px 4px 6px;cursor:pointer;color:var(--ink);font-size:1.125rem}
-.toggle .knob{flex-shrink:0;width:44px;height:26px;border-radius:13px;background:var(--control);position:relative;transition:background .2s}
-.toggle .knob::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:left .2s}
-.toggle[aria-checked="true"] .knob{background:var(--accent)}.toggle[aria-checked="true"] .knob::after{left:21px;background:var(--accent-ink)}
-.toggle:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
 .ctrl .nav{flex-direction:column;gap:2px;font-size:1.125rem}.ctrl .nav svg{width:20px;height:20px}.ctrl .nav:disabled{background:var(--soft);color:var(--muted);border-color:var(--rule);cursor:default}
 .foot{display:flex;flex-direction:column;gap:8px;font-size:.92rem;color:var(--muted)}
 @container (max-width:20rem){
@@ -225,6 +220,11 @@ const KEY='dad-sermons-v1';
 let S={pos:{},heard:{},log:[],cur:null,rate:1,dl:{}};
 try{Object.assign(S,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
 S.dl=S.dl||{};
+const PLAY_MODES=[['series','连续播放'],['repeat','单篇循环'],['shuffle','随机播放']];
+if(S.mode!=='stop'&&!PLAY_MODES.some(([value])=>value===S.mode)){
+  S.mode=S.auto===false?'stop':'series';
+}
+delete S.auto;
 const save=()=>{try{localStorage.setItem(KEY,JSON.stringify(S))}catch(e){}};
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??'').replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
@@ -254,20 +254,28 @@ let failId=0;
 function needLocal(t){return navigator.onLine===false||failId===t.id||(!!au.dataset.local&&+au.dataset.id===t.id)}
 function nowCard(){const t=cur();if(!t)return'';const p=S.pos[t.id]||{};const playing=!au.paused&&au.dataset.id==t.id;
   const canResume=p.t>5&&!(S.heard[t.id]&&pct(t)>.97);
-  const auto=S.auto!==false;
+  const details=$('#sermon-details');
+  const expanded=details?.open&&+details.dataset.talk===t.id;
   return `<section class="now" aria-labelledby="sermon-title"><div class="now-heading"><img class="player-sprig" src="assets/olive-branch-wide.webp" width="418" height="235" alt=""><h2 id="sermon-title">${esc(t.title)}</h2>
-<div class="meta">${t.ref?`<span class="scripture-ref">${esc(t.ref)}</span>`:''}${t.speaker?`<span>讲员 ${esc(t.speaker)}</span>`:''}<span>${dzh(t.date)}</span>${t.dur?`<span class="duration">${mins(t)}</span>`:''}</div>
-<p class="sermon-series"><span>系列</span><span>${esc(t.series)}</span></p></div>
+${t.ref?`<p class="scripture-ref">${esc(t.ref)}</p>`:''}</div>
 <div class="timeline"><input class="seek" id="seek" type="range" style="--progress:${Math.min(100,100*(p.t||0)/(p.d||t.dur||1))}%" min="0" max="${Math.round(p.d||t.dur||0)}" value="${Math.round(p.t||0)}" step="1" aria-label="播放进度">
 <div class="times"><span id="tcur">${fmt(p.t)}</span><span id="tdur">${p.d?fmt(p.d):(t.dur?fmt(t.dur):'--:--')}</span></div></div>
 ${(()=>{const pv=prevOf(t),nx=nextOf(t)||nextAny(t);return `<div class="ctrl"><button class="btn ghost nav" id="bprev" ${pv?'':'disabled'} aria-label="上一篇">${ICO.prev}<span>上一篇</span></button><button class="btn play" id="bplay">${playing?ICO.pause+'暂停':ICO.play+(p.t>5?'继续听':'播放')}</button><button class="btn ghost nav" id="bnext" ${nx?'':'disabled'} aria-label="下一篇">${ICO.next}<span>下一篇</span></button></div>`})()}
 <div class="play-settings">
   <label class="speed">倍速 <select id="rate">${[0.5,0.75,1,1.25,1.5].map(r=>`<option value="${r}" ${S.rate===r?'selected':''}>${r}×</option>`).join('')}</select></label>
-  <button class="toggle" id="bauto" role="switch" aria-checked="${auto}" title="连续播放同一系列的讲道">连续播放<span class="knob" aria-hidden="true"></span></button>
+  <select id="play-mode" aria-label="播放模式">
+    ${S.mode==='stop'?'<option value="stop" disabled selected>播完停止</option>':''}
+    ${PLAY_MODES.map(([value,label])=>`<option value="${value}" ${value===S.mode?'selected':''}>${label}</option>`).join('')}
+  </select>
 </div>
 <p class="status" id="st" role="status">${canResume&&!playing?'上次听到 '+fmt(p.t)+'，点「继续听」接着听。':''}</p>
 ${t.id>0?`<div class="player-actions">${S.dl[t.id]?`<a class="btn ghost done-btn" id="bdl" href="${mp3(t)}" target="_blank" rel="noopener">${ICO.ok}<span>已下载${mb(t)?`<small class="dl">约 ${mb(t)}</small>`:''}</span></a>`:`<a class="btn ghost" id="bdl" href="${mp3(t)}" target="_blank" rel="noopener">${ICO.dl}<span>下载到手机${mb(t)?`<small class="dl">约 ${mb(t)}</small>`:''}</span></a>`}${PS[t.id]?`<button class="btn ghost" id="bps">${ICO.book}看经文</button>`:''}${HO[t.id]?`<button class="btn ghost" id="bho">${ICO.doc}看讲义</button>`:(t.sheet?`<a class="btn ghost" href="${esc(t.sheet)}" target="_blank" rel="noopener">${ICO.doc}看讲义</a>`:'')}</div>
-${needLocal(t)?(S.dl[t.id]?`<div class="offbox"><button class="btn" id="blocal">${ICO.folder}没网？选手机里下载好的录音来播</button><p class="note">点上面的按钮，在手机的「下载」文件夹里选 <b class="code">${esc(t.file)}</b>，就能接着听，进度和听道记录照常保存。</p></div>`:`<div class="offbox"><p class="note">这一篇还没下载，没网的时候听不了。有网时点「下载到手机」，以后没网也能听。</p></div>`):''}`:''}</section>`}
+${needLocal(t)?(S.dl[t.id]?`<div class="offbox"><button class="btn" id="blocal">${ICO.folder}没网？选手机里下载好的录音来播</button><p class="note">点上面的按钮，在手机的「下载」文件夹里选 <b class="code">${esc(t.file)}</b>，就能接着听，进度和听道记录照常保存。</p></div>`:`<div class="offbox"><p class="note">这一篇还没下载，没网的时候听不了。有网时点「下载到手机」，以后没网也能听。</p></div>`):''}`:''}
+<details class="sermon-details" id="sermon-details" data-talk="${t.id}" ${expanded?'open':''}>
+  <summary id="sermon-details-toggle">讲道详情</summary>
+  <div class="meta">${t.speaker?`<span>讲员 ${esc(t.speaker)}</span>`:''}<span>${dzh(t.date)}</span>${t.dur?`<span class="duration">${mins(t)}</span>`:''}</div>
+  <p class="sermon-series"><span>系列</span><span>${esc(t.series)}</span></p>
+</details></section>`}
 
 function isOn(t){return +au.dataset.id===t.id&&!au.paused}
 function rowIco(t){return isOn(t)?ICO.pause:(+au.dataset.id===t.id||!S.heard[t.id])?ICO.play:ICO.ok}
@@ -360,6 +368,7 @@ function nextAny(t){if(!t||t.id<0)return null;const i=sorted.findIndex(x=>x.id==
 const ZOOM=[['小',.9],['中',1],['大',1.15],['特大',1.3]];
 function applyZoom(){document.documentElement.style.setProperty('--zoom',S.zoom||1)}
 function render(){applyZoom();
+  const focused=document.activeElement?.id;
   $('#app').innerHTML=`<header class="hd"><img class="brand-art" src="assets/hero-lily-collage.webp" width="845" height="527" alt="" fetchpriority="high"><p class="eyebrow">ST HELEN'S · 福音之家</p><h1><span>同听一道</span></h1>
 <div class="zbar" role="group" aria-label="字号">${ZOOM.map(([l,z],i)=>`<button data-zoom="${z}" aria-pressed="${(S.zoom||1)===z}" aria-label="字号：${l}"><span aria-hidden="true">${['A−','A','A+','A++'][i]}</span></button>`).join('')}</div></header>
 
@@ -373,6 +382,9 @@ ${tab==='now'&&!bgHint?guideButton():''}
 <p class="note">讲道录音和讲义来自伦敦 St Helen's Bishopsgate 教会（st-helens.org.uk），版权归教会所有。本页为家人和少数教会朋友整理的非商业听道页面，录音直接从教会网站播放。</p></footer>`;
   wire();
   updateMini();
+  if(['sermon-details-toggle','rate','play-mode'].includes(focused)){
+    document.getElementById(focused)?.focus({preventScroll:true});
+  }
 }
 function wire(){
   document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=e=>showTab(b.dataset.tab,e.detail===0));
@@ -387,7 +399,6 @@ function wire(){
   if($('#bps'))$('#bps').onclick=()=>openReader('ps');
   if($('#bguide'))$('#bguide').onclick=()=>{bgHint=false;openGuide()};
   document.querySelectorAll('[data-zoom]').forEach(b=>b.onclick=()=>{S.zoom=+b.dataset.zoom;save();render()});
-  if($('#bauto'))$('#bauto').onclick=()=>{S.auto=S.auto===false;save();render()};
   document.querySelectorAll('[data-sub]').forEach(b=>b.onclick=()=>{sub=b.dataset.sub;render()});
   document.querySelectorAll('[data-book]').forEach(b=>b.onclick=()=>{book=b.dataset.book;render()});
   document.querySelectorAll('[data-year]').forEach(b=>b.onclick=()=>{year=b.dataset.year||null;shown=30;render()});
@@ -410,6 +421,12 @@ function paintSeek(slider){
 }
 function wireRest(){
   const rate=$('#rate');if(rate)rate.onchange=()=>{S.rate=+rate.value;au.playbackRate=S.rate;save()};
+  const mode=$('#play-mode');
+  if(mode)mode.onchange=()=>{
+    S.mode=mode.value;
+    mode.querySelector('option[value="stop"]')?.remove();
+    save();
+  };
   const bdl=$('#bdl');if(bdl)bdl.addEventListener('click',()=>{const t=cur();if(t&&t.id>0&&!S.dl[t.id]){S.dl[t.id]=Date.now();save();setTimeout(render,300)}});
   if($('#selon'))$('#selon').onclick=()=>{selMode=true;sel.clear();confirmDel=false;render()};
   if($('#seldone'))$('#seldone').onclick=()=>{selMode=false;sel.clear();confirmDel=false;render()};
@@ -522,10 +539,33 @@ au.ontimeupdate=()=>{const id=+au.dataset.id,t=byId.get(id);if(!t)return;const d
 const soft=()=>{if(tab==='now')render();else{updateMini();updateRows()}};
 au.onplaying=()=>{const l=au.dataset.local;soft();if(l)setStatus('正在播放手机里的录音，没网也能听。')};
 au.onpause=()=>{const id=+au.dataset.id;if(id>0){S.pos[id]={t:au.currentTime,d:au.duration||0};save()}soft()};
-au.onended=()=>{const id=+au.dataset.id;const local=au.dataset.local;if(id>0)S.heard[id]=1;S.pos[id]={t:0,d:au.duration||0};save();
-  const nx=S.auto!==false?nextOf(byId.get(id)):null;
-  if(nx&&!local){play(nx);soft();setStatus('已自动播放下一篇。')}
-  else{soft();if(nx&&local)setStatus('下一篇是「'+nx.title+'」。没网时请点「没网？选手机里下载好的录音来播」再选一次文件。')}};
+au.onended=()=>{
+  const id=+au.dataset.id;
+  if(id>0)S.heard[id]=1;
+  S.pos[id]={t:0,d:au.duration||0};
+  save();
+
+  if(S.mode==='repeat'){
+    const my=++playSeq;
+    au.currentTime=0;
+    au.play().catch(error=>{if(my===playSeq&&error.name!=='AbortError')onlineFail()});
+    return;
+  }
+
+  let next=null;
+  if(S.mode==='series')next=nextOf(byId.get(id));
+  if(S.mode==='shuffle'&&!au.dataset.local&&navigator.onLine!==false){
+    const otherTalks=sorted.filter(t=>t.id!==id);
+    next=otherTalks[Math.floor(Math.random()*otherTalks.length)];
+  }
+  if(next&&!au.dataset.local&&navigator.onLine!==false){
+    play(next);soft();
+    setStatus(S.mode==='shuffle'?'已随机播放另一篇讲道。':'已自动播放下一篇。');
+  }else{
+    soft();
+    if(next&&au.dataset.local)setStatus('下一篇是「'+next.title+'」。没网时请点「没网？选手机里下载好的录音来播」再选一次文件。');
+  }
+};
 au.onerror=()=>{if(au.dataset.local&&au.src!==localUrl)return;if(!au.dataset.local&&tryRecover('error'))return;onlineFail()};
 /* Network hiccups (walking between signals, lock screen): reconnect and carry on from the same spot */
 let rcTimer=0,rcTries=0,stallT=0,playedId=0;
